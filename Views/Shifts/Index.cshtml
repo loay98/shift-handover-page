@@ -1,0 +1,56 @@
+@model IReadOnlyList<Shift>
+@{
+    ViewData["Title"] = "Shifts";
+    var currentUserId = ViewData["CurrentUserId"] as string;
+}
+
+<div class="section-heading mb-4">
+    <div>
+        <p class="eyebrow">Shift board</p>
+        <h1>All shifts</h1>
+    </div>
+</div>
+
+<div class="grid-cards">
+@foreach (var shift in Model)
+{
+    var isMine = shift.ClaimedByUserId == currentUserId;
+    <article class="shift-card">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+                <p class="eyebrow mb-2">@shift.Title</p>
+                <h2 class="h5 mb-1">@shift.ScheduledFor.ToString("dd MMM yyyy HH:mm")</h2>
+                <p class="text-muted mb-0">@shift.Logs.Count log entries</p>
+            </div>
+            <span class="status-pill status-@shift.Status.ToString().ToLowerInvariant()">@shift.Status</span>
+        </div>
+
+        <dl class="shift-meta">
+            <div>
+                <dt>Claimed by</dt>
+                <dd>@(shift.ClaimedByUserName ?? "Available")</dd>
+            </div>
+            <div>
+                <dt>Closed</dt>
+                <dd>@(shift.ClosedAt?.ToString("dd MMM HH:mm") ?? "Not closed")</dd>
+            </div>
+        </dl>
+
+        <div class="card-actions mt-3">
+            <a class="btn btn-outline-light" asp-action="Details" asp-route-id="@shift.Id">Details</a>
+
+            @if (shift.Status == ShiftStatus.Open)
+            {
+                <form asp-action="Claim" asp-route-id="@shift.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-primary" type="submit">Claim</button>
+                </form>
+            }
+            else if (isMine && shift.Status == ShiftStatus.Claimed)
+            {
+                <a class="btn btn-primary" asp-action="Log" asp-route-id="@shift.Id">Add log</a>
+            }
+        </div>
+    </article>
+}
+</div>

@@ -1,0 +1,118 @@
+@model Shift
+@{
+    ViewData["Title"] = $"Shift {Model.Title}";
+    var canManage = ViewData["CanManage"] as bool? ?? false;
+    var canClaim = ViewData["CanClaim"] as bool? ?? false;
+    var canClose = ViewData["CanClose"] as bool? ?? false;
+    var canReport = ViewData["CanReport"] as bool? ?? false;
+    var statusMessage = ViewData["StatusMessage"] as string;
+}
+
+<div class="surface-panel">
+    @if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <div class="alert alert-success">@statusMessage</div>
+    }
+
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Shift details</p>
+            <h1>@Model.Title</h1>
+        </div>
+        <span class="status-pill status-@Model.Status.ToString().ToLowerInvariant()">@Model.Status</span>
+    </div>
+
+    <div class="shift-summary-grid">
+        <div class="summary-box">
+            <span>Scheduled</span>
+            <strong>@Model.ScheduledFor.ToString("dd MMM yyyy HH:mm")</strong>
+        </div>
+        <div class="summary-box">
+            <span>Claimed by</span>
+            <strong>@(Model.ClaimedByUserName ?? "Unassigned")</strong>
+        </div>
+        <div class="summary-box">
+            <span>Closed at</span>
+            <strong>@(Model.ClosedAt?.ToString("dd MMM yyyy HH:mm") ?? "Open")</strong>
+        </div>
+    </div>
+
+    <div class="card-actions mt-4">
+        <a class="btn btn-outline-light" asp-action="Index">Back to board</a>
+
+        @if (canClaim)
+        {
+            <form asp-action="Claim" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-primary" type="submit">Claim shift</button>
+            </form>
+        }
+
+        @if (canManage)
+        {
+            <a class="btn btn-primary" asp-action="Log" asp-route-id="@Model.Id">Add log entry</a>
+        }
+
+        @if (canClose)
+        {
+            <form asp-action="Close" asp-route-id="@Model.Id" method="post" class="close-form">
+                @Html.AntiForgeryToken()
+                <input name="closureSummary" class="form-control" placeholder="Closure summary" />
+                <button class="btn btn-warning" type="submit">Close shift</button>
+            </form>
+        }
+
+        @if (canReport)
+        {
+            <a class="btn btn-success" asp-action="Report" asp-route-id="@Model.Id">Download PDF</a>
+        }
+    </div>
+</div>
+
+<section class="surface-panel mt-4">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Shift log</p>
+            <h2>Accidents, incidents, and manpower updates</h2>
+        </div>
+    </div>
+
+    @if (!Model.Logs.Any())
+    {
+        <p class="text-muted mb-0">No log entries have been recorded yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle dashboard-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var log in Model.Logs.OrderByDescending(log => log.OccurredAt))
+                {
+                    <tr>
+                        <td>@log.OccurredAt.ToString("dd MMM HH:mm")</td>
+                        <td><span class="status-pill status-open">@log.LogType</span></td>
+                        <td>@log.Title</td>
+                        <td>@log.Description</td>
+                        <td>
+                            @log.LoggedByUserName
+                            @if (log.ManpowerCount is not null)
+                            {
+                                <div class="small text-muted">Manpower: @log.ManpowerCount</div>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

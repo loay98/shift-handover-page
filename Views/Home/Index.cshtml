@@ -1,0 +1,87 @@
+﻿@model HomeIndexViewModel
+@{
+    ViewData["Title"] = "Overview";
+}
+
+<section class="hero-panel">
+    <div class="hero-copy">
+        <p class="eyebrow">Supervisor handover workflow</p>
+        <h1>Claim the shift, log what happened, close it cleanly, and export a PDF record.</h1>
+        <p class="lead">
+            This demo shows the full supervisor lifecycle: authentication, shift claiming, incident and manpower logging, controlled shift closing, and PDF report generation for closed shifts.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" asp-controller="Shifts" asp-action="Index">Open dashboard</a>
+            <a class="btn btn-outline-light btn-lg" asp-area="Identity" asp-page="/Account/Login">Supervisor login</a>
+        </div>
+        <div class="demo-credentials">
+            <span class="demo-label">Demo users:</span>
+            <div class="demo-user-list">
+                <strong class="demo-user">supervisor1@demo.local / Demo123!</strong>
+                <strong class="demo-user">supervisor2@demo.local / Demo123!</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-metrics">
+        <div class="metric-card">
+            <span>Open</span>
+            <strong>@Model.OpenCount</strong>
+        </div>
+        <div class="metric-card">
+            <span>Claimed</span>
+            <strong>@Model.ClaimedCount</strong>
+        </div>
+        <div class="metric-card">
+            <span>Closed</span>
+            <strong>@Model.ClosedCount</strong>
+        </div>
+        <div class="metric-card">
+            <span>Total</span>
+            <strong>@(Model.OpenCount + Model.ClaimedCount + Model.ClosedCount)</strong>
+        </div>
+    </div>
+</section>
+
+<section class="surface-panel mt-4">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Recent shifts</p>
+            <h2>Board snapshot</h2>
+        </div>
+        <a asp-controller="Shifts" asp-action="Index" class="section-link">View all shifts</a>
+    </div>
+
+    @if (!Model.RecentShifts.Any())
+    {
+        <p class="text-muted mb-0">No shifts have been seeded yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle dashboard-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Scheduled</th>
+                        <th>Status</th>
+                        <th>Claimed by</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var shift in Model.RecentShifts)
+                {
+                    <tr>
+                        <td class="fw-semibold">@shift.Title</td>
+                        <td>@shift.ScheduledFor.ToString("dd MMM yyyy HH:mm")</td>
+                        <td><span class="status-pill status-@shift.Status.ToString().ToLowerInvariant()">@shift.Status</span></td>
+                        <td>@(shift.ClaimedByUserName ?? "Available")</td>
+                        <td class="text-end"><a asp-controller="Shifts" asp-action="Details" asp-route-id="@shift.Id">Open</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
